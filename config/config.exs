@@ -7,9 +7,22 @@
 # General application configuration
 import Config
 
+config :monolinc, :scopes,
+  user: [
+    default: true,
+    module: Monolinc.Accounts.Scope,
+    assign_key: :current_scope,
+    access_path: [:user, :id],
+    schema_key: :user_id,
+    schema_type: :binary_id,
+    schema_table: :users,
+    test_data_fixture: Monolinc.AccountsFixtures,
+    test_setup_helper: :register_and_log_in_user
+  ]
+
 config :monolinc,
   ecto_repos: [Monolinc.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [binary_id: true, timestamp_type: :utc_datetime]
 
 # Configures the endpoint
 config :monolinc, MonolincWeb.Endpoint,
