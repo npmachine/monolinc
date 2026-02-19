@@ -9,7 +9,7 @@ import Config
 
 config :monolinc,
   ecto_repos: [Monolinc.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [binary_id: true, timestamp_type: :utc_datetime]
 
 # Configures the endpoint
 config :monolinc, MonolincWeb.Endpoint,
