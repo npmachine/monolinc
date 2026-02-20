@@ -7,7 +7,7 @@ defmodule Monolinc.Repo.Migrations.CreateRooms do
       add :name, :string, null: false
       add :slug, :string, null: false
       add :description, :string
-      add :created_by, references(:users, type: :binary_id), null: false
+      add :created_by, references(:users, type: :binary_id, on_delete: :restrict), null: false
 
       timestamps()
     end
