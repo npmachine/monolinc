@@ -4,10 +4,19 @@ defmodule Monolinc.Rooms do
   alias Monolinc.Repo
   alias Monolinc.Rooms.Room
 
+  @doc """
+  Returns all rooms ordered by newest first.
+  """
   def list_rooms do
     Repo.all(from r in Room, order_by: [desc: r.inserted_at])
   end
 
+  @doc """
+  Creates a room for the given user with an auto-generated slug.
+
+  Slugs are normalized to lowercase with only alphanumeric and hyphens.
+  If a slug collision occurs, a short random suffix is appended and the insert retried.
+  """
   def create_room(user, attrs) do
     attrs = stringify_keys(attrs)
     name = Map.get(attrs, "name") || ""
