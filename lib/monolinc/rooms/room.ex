@@ -16,6 +16,7 @@ defmodule Monolinc.Rooms.Room do
   def changeset(room, attrs) do
     room
     |> cast(attrs, [:name, :slug, :description, :created_by])
-    |> validate_required([:name])
+    |> validate_required([:name, :slug, :created_by])
+    |> unique_constraint(:slug)
   end
 end
