@@ -21,7 +21,8 @@ defmodule Monolinc.Rooms do
     if base_slug == "" do
       {:error,
        Room.changeset(%Room{}, attrs)
-       |> Ecto.Changeset.add_error(:slug, "must include letters or numbers")}
+       |> Ecto.Changeset.add_error(:slug, "must include letters or numbers")
+       |> Ecto.Changeset.add_error(:name, "must include letters or numbers")}
     else
       do_insert_with_slug(attrs, 0)
     end
