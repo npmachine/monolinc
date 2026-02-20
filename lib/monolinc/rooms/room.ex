@@ -17,6 +17,8 @@ defmodule Monolinc.Rooms.Room do
     room
     |> cast(attrs, [:name, :slug, :description, :created_by])
     |> validate_required([:name, :slug, :created_by])
+    |> validate_length(:name, max: 100)
+    |> validate_length(:description, max: 500)
     |> unique_constraint(:slug)
   end
 end
