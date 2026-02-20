@@ -70,4 +70,14 @@ defmodule MonolincWeb.Router do
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
   end
+
+  scope "/", MonolincWeb do
+    pipe_through [:browser]
+
+    live_session :require_authenticated_user,
+      on_mount: [{MonolincWeb.UserAuth, :ensure_authenticated}] do
+      live "/rooms", RoomLive.Index, :index
+      live "/rooms/new", RoomLive.New, :new
+    end
+  end
 end

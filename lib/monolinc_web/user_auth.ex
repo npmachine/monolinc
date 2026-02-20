@@ -41,6 +41,23 @@ defmodule MonolincWeb.UserAuth do
   end
 
   @doc """
+  LiveView on_mount callbacks for authentication.
+  """
+  def on_mount(:mount_current_scope, _params, session, socket) do
+    {:cont, assign_current_scope(socket, session)}
+  end
+
+  def on_mount(:ensure_authenticated, _params, session, socket) do
+    socket = assign_current_scope(socket, session)
+
+    if socket.assigns.current_scope && socket.assigns.current_scope.user do
+      {:cont, socket}
+    else
+      {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/users/log-in")}
+    end
+  end
+
+  @doc """
   Logs the user out.
 
   It clears all session data for safety. See renew_session.
@@ -216,4 +233,27 @@ defmodule MonolincWeb.UserAuth do
   end
 
   defp maybe_store_return_to(conn), do: conn
+
+  defp assign_current_scope(socket, session) do
+    if Map.has_key?(socket.assigns, :current_scope) do
+      socket
+    else
+      current_scope =
+        case get_user_from_session(session) do
+          nil -> nil
+          user -> Scope.for_user(user)
+        end
+
+      Phoenix.Component.assign(socket, :current_scope, current_scope)
+    end
+  end
+
+  defp get_user_from_session(%{"user_token" => token}) do
+    case Accounts.get_user_by_session_token(token) do
+      {user, _} -> user
+      nil -> nil
+    end
+  end
+
+  defp get_user_from_session(_session), do: nil
 end
