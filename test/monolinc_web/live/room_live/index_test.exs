@@ -10,6 +10,8 @@ defmodule MonolincWeb.RoomLive.IndexTest do
   test "lists rooms for authenticated users", %{conn: conn} do
     %{conn: conn} = register_and_log_in_user(%{conn: conn})
     {:ok, view, _html} = live(conn, ~p"/rooms")
+    assert has_element?(view, "#app-shell")
     assert has_element?(view, "#rooms-index")
+    assert has_element?(view, "#rooms-page-shell")
   end
 end
