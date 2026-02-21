@@ -12,6 +12,16 @@ defmodule Monolinc.Rooms do
   end
 
   @doc """
+  Gets a room by id.
+  """
+  def get_room!(id), do: Repo.get!(Room, id)
+
+  @doc """
+  Gets a room by slug.
+  """
+  def get_room_by_slug!(slug), do: Repo.get_by!(Room, slug: slug)
+
+  @doc """
   Creates a room for the given user with an auto-generated slug.
 
   Slugs are normalized to lowercase with only alphanumeric and hyphens.
@@ -57,7 +67,8 @@ defmodule Monolinc.Rooms do
   end
 
   defp do_insert_with_slug(attrs, _attempt) do
-    {:error, Room.changeset(%Room{}, attrs) |> Ecto.Changeset.add_error(:slug, "is already taken")}
+    {:error,
+     Room.changeset(%Room{}, attrs) |> Ecto.Changeset.add_error(:slug, "is already taken")}
   end
 
   defp slug_collision?(changeset) do

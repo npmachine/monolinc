@@ -78,6 +78,7 @@ defmodule MonolincWeb.Router do
       on_mount: [{MonolincWeb.UserAuth, :ensure_authenticated}] do
       live "/rooms", RoomLive.Index, :index
       live "/rooms/new", RoomLive.New, :new
+      live "/rooms/:slug", RoomLive.Show, :show
     end
   end
 end
