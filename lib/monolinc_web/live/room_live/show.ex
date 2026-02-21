@@ -7,26 +7,34 @@ defmodule MonolincWeb.RoomLive.Show do
 
   @impl true
   def mount(%{"slug" => slug}, _session, socket) do
-    room = Rooms.get_room_by_slug!(slug)
-    topic = "room:#{room.id}"
+    case Rooms.get_room_by_slug(slug) do
+      nil ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Room not found")
+         |> push_navigate(to: ~p"/rooms")}
 
-    if connected?(socket) do
-      Endpoint.subscribe(topic)
+      room ->
+        topic = "room:#{room.id}"
+
+        if connected?(socket) do
+          Endpoint.subscribe(topic)
+        end
+
+        messages =
+          room
+          |> Messaging.list_recent_messages(50)
+          |> Enum.reverse()
+          |> Enum.map(&message_to_view/1)
+
+        {:ok,
+         socket
+         |> assign(:page_title, room.name)
+         |> assign(:room, room)
+         |> assign(:room_topic, topic)
+         |> assign(:form, to_form(%{"content" => ""}, as: :message))
+         |> stream(:messages, messages)}
     end
-
-    messages =
-      room
-      |> Messaging.list_recent_messages(50)
-      |> Enum.reverse()
-      |> Enum.map(&message_to_view/1)
-
-    {:ok,
-     socket
-     |> assign(:page_title, room.name)
-     |> assign(:room, room)
-     |> assign(:room_topic, topic)
-     |> assign(:form, to_form(%{"content" => ""}, as: :message))
-     |> stream(:messages, messages)}
   end
 
   @impl true
@@ -54,50 +62,68 @@ defmodule MonolincWeb.RoomLive.Show do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div id="room-chat" class="space-y-6">
-        <div class="space-y-1">
-          <h1 class="text-2xl font-semibold">{@room.name}</h1>
-          <p class="text-sm text-base-content/70">Real-time room chat.</p>
-        </div>
-
-        <div id="messages" phx-update="stream" class="space-y-3">
-          <div
-            id="messages-empty"
-            class="hidden only:block rounded-lg border border-dashed border-base-300 p-4 text-sm text-base-content/60"
-          >
-            No messages yet.
+      <section
+        id="room-chat-shell"
+        class="rounded-2xl border border-base-300/70 bg-base-100/70 p-6 shadow-sm"
+      >
+        <div id="room-chat" class="space-y-6">
+          <div class="space-y-1">
+            <h1 class="text-2xl font-semibold tracking-tight">{@room.name}</h1>
+            <p class="text-sm text-base-content/70">Real-time room chat.</p>
           </div>
-          <article
-            :for={{id, message} <- @streams.messages}
-            id={id}
-            class="rounded-xl border border-base-300 bg-base-100 p-3"
-          >
-            <div class="flex items-center justify-between gap-2">
-              <p class="text-xs font-medium text-base-content/70">{message.user_email}</p>
-              <p class="text-xs text-base-content/50">{format_time(message.inserted_at)}</p>
+
+          <div id="messages" phx-update="stream" class="space-y-3">
+            <div
+              id="messages-empty"
+              class="hidden only:block rounded-lg border border-dashed border-base-300 p-4 text-sm text-base-content/60"
+            >
+              No messages yet.
             </div>
-            <p class="mt-1 whitespace-pre-wrap break-words text-sm text-base-content">
-              {message.content}
-            </p>
-          </article>
-        </div>
-
-        <.form for={@form} id="message-form" phx-submit="send" class="flex items-start gap-2">
-          <div class="flex-1">
-            <.input
-              field={@form[:content]}
-              type="text"
-              id="message-input"
-              placeholder="Type your message"
-              autocomplete="off"
-              required
-            />
+            <article
+              :for={{id, message} <- @streams.messages}
+              id={id}
+              class="rounded-xl border border-base-300 bg-base-100 p-3 transition-colors duration-200 hover:border-primary/40"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs font-medium text-base-content/70">{message.user_email}</p>
+                <p class="text-xs text-base-content/50">{format_time(message.inserted_at)}</p>
+              </div>
+              <p class="mt-1 whitespace-pre-wrap break-words text-sm text-base-content">
+                {message.content}
+              </p>
+            </article>
           </div>
-          <button type="submit" id="message-submit" class="btn btn-primary">
-            Send
-          </button>
-        </.form>
-      </div>
+
+          <div
+            id="chat-connection-status"
+            class="hidden rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning"
+            phx-disconnected={JS.remove_class("hidden")}
+            phx-connected={JS.add_class("hidden")}
+          >
+            Connection lost. Reconnecting...
+          </div>
+
+          <.form for={@form} id="message-form" phx-submit="send" class="flex items-start gap-2">
+            <div class="flex-1">
+              <.input
+                field={@form[:content]}
+                type="text"
+                id="message-input"
+                placeholder="Type your message"
+                autocomplete="off"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              id="message-submit"
+              class="btn btn-primary transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            >
+              Send
+            </button>
+          </.form>
+        </div>
+      </section>
     </Layouts.app>
     """
   end

@@ -19,6 +19,11 @@ defmodule Monolinc.Rooms do
   @doc """
   Gets a room by slug.
   """
+  def get_room_by_slug(slug), do: Repo.get_by(Room, slug: slug)
+
+  @doc """
+  Gets a room by slug.
+  """
   def get_room_by_slug!(slug), do: Repo.get_by!(Room, slug: slug)
 
   @doc """
